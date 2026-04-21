@@ -1,0 +1,17 @@
+{
+  "name": "istanbul-bme-bot",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "node deploy.js",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "@upstash/box": "latest",
+    "@upstash/redis": "^1.34.3",
+    "axios": "^1.7.9",
+    "cheerio": "^1.0.0",
+    "form-data": "^4.0.1",
+    "node-cron": "^3.0.3"
+  }
+}
