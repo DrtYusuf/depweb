@@ -1,7 +1,7 @@
 require("dotenv").config();
 
 const { filterNew, markSeen } = require("./lib/redis");
-const { sendSummary, sendEvent } = require("./lib/telegram");
+const { sendEvent } = require("./lib/telegram");
 const { isRelevant, isNotPast } = require("./lib/filter");
 
 const eventbrite = require("./lib/sources/eventbrite");
@@ -46,8 +46,6 @@ async function run() {
 
   const newEvents = (await filterNew(relevant)).filter((e) => e.title && e.title.length > 3);
   console.log(`Yeni: ${newEvents.length} etkinlik`);
-
-  if (newEvents.length > 0) await sendSummary(newEvents);
 
   for (const event of newEvents) {
     await sendEvent(event);
