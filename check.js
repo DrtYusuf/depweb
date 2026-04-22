@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const { filterNew, markSeen } = require("./lib/redis");
 const { sendSummary, sendEvent } = require("./lib/telegram");
-const { isRelevant } = require("./lib/filter");
+const { isRelevant, isNotPast } = require("./lib/filter");
 
 const eventbrite = require("./lib/sources/eventbrite");
 const meetup = require("./lib/sources/meetup");
@@ -39,7 +39,7 @@ async function run() {
   console.log(`Toplam: ${all.length} etkinlik`);
 
   const relevant = all.filter((e) =>
-    ["ytu", "bogazici", "ieee"].includes(e.source) ? true : isRelevant(e)
+    (["ytu", "bogazici", "ieee"].includes(e.source) ? true : isRelevant(e)) && isNotPast(e)
   );
 
   console.log(`Filtrelenmiş: ${relevant.length} ilgili etkinlik`);
