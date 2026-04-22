@@ -44,7 +44,7 @@ async function run() {
 
   console.log(`Filtrelenmiş: ${relevant.length} ilgili etkinlik`);
 
-  const newEvents = await filterNew(relevant);
+  const newEvents = (await filterNew(relevant)).filter((e) => e.title && e.title.length > 3);
   console.log(`Yeni: ${newEvents.length} etkinlik`);
 
   if (newEvents.length > 0) await sendSummary(newEvents);
