@@ -45,7 +45,7 @@ async function run() {
   const seenUrls = new Set();
   const relevant = all.filter((e) => {
     if (!isActualEvent(e)) return false;
-    if (!(["ytu", "bogazici", "ieee", "tavily"].includes(e.source) ? true : isRelevant(e))) return false;
+    if (!(["ytu", "bogazici", "ieee"].includes(e.source) ? true : isRelevant(e))) return false;
     if (!isWithinSixMonths(e)) return false;
     if (seenUrls.has(e.url)) return false;
     seenUrls.add(e.url);
