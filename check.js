@@ -39,9 +39,10 @@ async function run() {
 
   console.log(`Toplam: ${all.length} etkinlik`);
 
-  // Filtrele: alakalı, geçmişte değil, etkinlik (taziye vb. değil)
+  // Filtrele: alakalı, tarihli, geçmişte değil, etkinlik (taziye vb. değil)
   const seenUrls = new Set();
   const relevant = all.filter((e) => {
+    if (!e.date || e.date.trim().length < 3) return false;
     if (!isActualEvent(e)) return false;
     if (!(["ytu", "bogazici", "ieee"].includes(e.source) ? true : isRelevant(e))) return false;
     if (!isNotPast(e)) return false;
