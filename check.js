@@ -3,6 +3,7 @@ require("dotenv").config();
 const { filterNew, markSeen } = require("./lib/redis");
 const { sendEvent } = require("./lib/telegram");
 const { isRelevant, isNotPast } = require("./lib/filter");
+const { fetchPublishedYear } = require("./lib/fetchPublishedYear");
 
 const eventbrite = require("./lib/sources/eventbrite");
 const meetup = require("./lib/sources/meetup");
@@ -44,7 +45,16 @@ async function run() {
 
   console.log(`Filtrelenmiş: ${relevant.length} ilgili etkinlik`);
 
-  const newEvents = (await filterNew(relevant)).filter((e) => e.title && e.title.length > 3);
+  // Yayın tarihi kontrolü — paralel çek
+  const thisYear = new Date().getFullYear();
+  const publishChecks = await Promise.allSettled(relevant.map((e) => fetchPublishedYear(e.url)));
+  const freshEvents = relevant.filter((_, i) => {
+    const year = publishChecks[i].status === "fulfilled" ? publishChecks[i].value : null;
+    return year === null || year >= thisYear - 1; // bu yıl veya geçen yıl
+  });
+  console.log(`Yayın tarihi geçenler çıkarıldı: ${freshEvents.length} etkinlik`);
+
+  const newEvents = (await filterNew(freshEvents)).filter((e) => e.title && e.title.length > 3);
   console.log(`Yeni: ${newEvents.length} etkinlik`);
 
   for (const event of newEvents) {
@@ -52,7 +62,7 @@ async function run() {
     await new Promise((r) => setTimeout(r, 300));
   }
 
-  await markSeen(relevant);
+  await markSeen(freshEvents);
   console.log(`[${new Date().toISOString()}] Tamamlandı.`);
 }
 
