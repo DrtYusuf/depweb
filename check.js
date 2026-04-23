@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const { filterNew, markSeen } = require("./lib/redis");
 const { sendEvent } = require("./lib/telegram");
-const { isRelevant, isNotPast } = require("./lib/filter");
+const { isRelevant, isActualEvent, isNotPast } = require("./lib/filter");
 const { fetchPublishedYear } = require("./lib/fetchPublishedYear");
 
 const eventbrite = require("./lib/sources/eventbrite");
@@ -39,9 +39,16 @@ async function run() {
 
   console.log(`Toplam: ${all.length} etkinlik`);
 
-  const relevant = all.filter((e) =>
-    (["ytu", "bogazici", "ieee"].includes(e.source) ? true : isRelevant(e)) && isNotPast(e)
-  );
+  // Filtrele: alakalı, geçmişte değil, etkinlik (taziye vb. değil)
+  const seenUrls = new Set();
+  const relevant = all.filter((e) => {
+    if (!isActualEvent(e)) return false;
+    if (!(["ytu", "bogazici", "ieee"].includes(e.source) ? true : isRelevant(e))) return false;
+    if (!isNotPast(e)) return false;
+    if (seenUrls.has(e.url)) return false;
+    seenUrls.add(e.url);
+    return true;
+  });
 
   console.log(`Filtrelenmiş: ${relevant.length} ilgili etkinlik`);
 
