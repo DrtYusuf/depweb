@@ -1,7 +1,7 @@
 require("dotenv").config();
 
 const { filterNew, markSeen } = require("./lib/redis");
-const { sendEvent } = require("./lib/telegram");
+const { sendEvent, sendMessage } = require("./lib/telegram");
 const { isRelevant, isActualEvent, isWithinSixMonths } = require("./lib/filter");
 
 const eventbrite = require("./lib/sources/eventbrite");
@@ -9,16 +9,18 @@ const meetup = require("./lib/sources/meetup");
 const ieee = require("./lib/sources/ieee");
 const universities = require("./lib/sources/universities");
 const tavily = require("./lib/sources/tavily");
+const kongreuzmani = require("./lib/sources/kongreuzmani");
 
 async function run() {
   console.log(`[${new Date().toISOString()}] Tarama başladı...`);
 
-  const [eb, mu, ie, uni, tv] = await Promise.allSettled([
+  const [eb, mu, ie, uni, tv, ku] = await Promise.allSettled([
     eventbrite.scrape(),
     meetup.scrape(),
     ieee.scrape(),
     universities.scrape(),
     tavily.scrape(),
+    kongreuzmani.scrape(),
   ]);
 
   const extract = (r, name) => {
@@ -37,6 +39,7 @@ async function run() {
     ...extract(ie, "IEEE"),
     ...extract(uni, "Üniversiteler"),
     ...extract(tv, "Tavily"),
+    ...extract(ku, "KongreUzmani"),
   ];
 
   console.log(`Toplam: ${all.length} etkinlik`);
@@ -45,7 +48,7 @@ async function run() {
   const seenUrls = new Set();
   const relevant = all.filter((e) => {
     if (!isActualEvent(e)) return false;
-    if (!(["ytu", "bogazici", "ieee"].includes(e.source) ? true : isRelevant(e))) return false;
+    if (!(["ytu", "bogazici", "ieee", "kongreuzmani"].includes(e.source) ? true : isRelevant(e))) return false;
     if (!isWithinSixMonths(e)) return false;
     if (seenUrls.has(e.url)) return false;
     seenUrls.add(e.url);
@@ -63,6 +66,14 @@ async function run() {
   }
 
   await markSeen(relevant);
+
+  const now = new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  if (newEvents.length > 0) {
+    await sendMessage(`✅ <b>Günlük Tarama Tamamlandı</b>\n📅 ${now}\n🔔 ${newEvents.length} yeni etkinlik gönderildi.`);
+  } else {
+    await sendMessage(`✅ <b>Günlük Tarama Tamamlandı</b>\n📅 ${now}\n📭 Yeni etkinlik bulunamadı.`);
+  }
+
   console.log(`[${new Date().toISOString()}] Tamamlandı.`);
 }
 
