@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const { filterNew, markSeen } = require("./lib/redis");
 const { sendEvent, sendMessage } = require("./lib/telegram");
-const { isRelevant, isActualEvent, isWithinSixMonths } = require("./lib/filter");
+const { isRelevant, isActualEvent, isWithinSixMonths, isIstanbulOrOnline } = require("./lib/filter");
 
 const eventbrite = require("./lib/sources/eventbrite");
 const meetup = require("./lib/sources/meetup");
@@ -48,7 +48,9 @@ async function run() {
   const seenUrls = new Set();
   const relevant = all.filter((e) => {
     if (!isActualEvent(e)) return false;
-    if (!(["ytu", "bogazici", "ieee", "kongreuzmani"].includes(e.source) ? true : isRelevant(e))) return false;
+    if (e.source === "kongreuzmani") {
+      if (!isIstanbulOrOnline([e.title, e.location].join(" "))) return false;
+    } else if (!(["ytu", "bogazici", "ieee"].includes(e.source) ? true : isRelevant(e))) return false;
     if (!isWithinSixMonths(e)) return false;
     if (seenUrls.has(e.url)) return false;
     seenUrls.add(e.url);
