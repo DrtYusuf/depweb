@@ -8,15 +8,17 @@ const eventbrite = require("./lib/sources/eventbrite");
 const meetup = require("./lib/sources/meetup");
 const ieee = require("./lib/sources/ieee");
 const universities = require("./lib/sources/universities");
+const tavily = require("./lib/sources/tavily");
 
 async function run() {
   console.log(`[${new Date().toISOString()}] Tarama başladı...`);
 
-  const [eb, mu, ie, uni] = await Promise.allSettled([
+  const [eb, mu, ie, uni, tv] = await Promise.allSettled([
     eventbrite.scrape(),
     meetup.scrape(),
     ieee.scrape(),
     universities.scrape(),
+    tavily.scrape(),
   ]);
 
   const extract = (r, name) => {
@@ -34,6 +36,7 @@ async function run() {
     ...extract(mu, "Meetup"),
     ...extract(ie, "IEEE"),
     ...extract(uni, "Üniversiteler"),
+    ...extract(tv, "Tavily"),
   ];
 
   console.log(`Toplam: ${all.length} etkinlik`);
@@ -42,7 +45,7 @@ async function run() {
   const seenUrls = new Set();
   const relevant = all.filter((e) => {
     if (!isActualEvent(e)) return false;
-    if (!(["ytu", "bogazici", "ieee"].includes(e.source) ? true : isRelevant(e))) return false;
+    if (!(["ytu", "bogazici", "ieee", "tavily"].includes(e.source) ? true : isRelevant(e))) return false;
     if (!isWithinSixMonths(e)) return false;
     if (seenUrls.has(e.url)) return false;
     seenUrls.add(e.url);
