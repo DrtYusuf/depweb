@@ -58,7 +58,7 @@ async function run() {
   const publishChecks = await Promise.allSettled(relevant.map((e) => fetchPublishedYear(e.url)));
   const freshEvents = relevant.filter((_, i) => {
     const year = publishChecks[i].status === "fulfilled" ? publishChecks[i].value : null;
-    return year === null || year >= thisYear; // sadece bu yıl yayınlananlar
+    return year === null || year >= thisYear - 1; // bu yıl veya geçen yıl yayınlananlar
   });
   console.log(`Yayın tarihi geçenler çıkarıldı: ${freshEvents.length} etkinlik`);
 
